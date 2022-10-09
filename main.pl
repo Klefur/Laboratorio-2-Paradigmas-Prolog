@@ -7,12 +7,13 @@ pixrgb-d(X,Y,R,G,B,D,[X,Y,[R,G,B],D]) :-
     between(0, 255, R), between(0, 255, G), between(0, 255, B).
 
 pixhex-d(X,Y,Hex,D,[X, Y, Hex, D]) :-
-    integer(X), integer(Y), string(Hex), integer(D).
+    integer(X), integer(Y), string(Hex), integer(D),
+    string_length(Hex,7).
 
-pixel(X,Y,Color,D,P1) :-
-    pixbit-d(X,Y,Color,D,P1);
-    pixhex-d(X,Y,Color,D,P1);
-	pixrgb-d(_,_,R,G,B,_,[_,_,Color,_]), pixrgb-d(X,Y,R,G,B,D,P1).
+pixel(X,Y,Color,D,[X,Y,Color,D]) :-
+    pixbit-d(X,Y,Color,D,[X,Y,Color,D]);
+    pixhex-d(X,Y,Color,D,[X,Y,Color,D]);
+	pixrgb-d(X,Y,_,_,_,D,[X,Y,Color,D]).
 
 image(A,L,Pixeles,[A,L,Pixeles,C]):-
     string(C);integer(C);is_list(C); C is -1.
@@ -84,19 +85,6 @@ cropPixs([H|T],X0,Y0,X1,Y1,[H2|T2]):-
     pixel(X2,Y2,Color,D,H2),
     cropPixs(T,X0,Y0,X1,Y1,T2).
 
-imageRGBToHex([A,L,P,C], [A,L,P2,C]):-
-    imageIsPixmap([A,L,P,C]),
-    not(imageIsCompressed([A,L,P,C])),
-    rgbToHexPixs(P,P2),
-    image([A,L,P2,C]).
-
-rgbToHexPixs([],[]).
-rgbToHexPixs([H|T],[H2|T2]):-
-    pixrgb-d(X,Y,R,G,B,D,H),
-    hex_bytes(Hex,[R,G,B]), concat("#",Hex,Hex2),
-    pixhex-d(X,Y,Hex2,D,H2),
-    rgbToHexPixs(T,T2).
-
 imageRGBToHex([A,L,P,C], I2):-
     imageIsPixmap([A,L,P,C]),
     not(imageIsCompressed([A,L,P,C])),
@@ -109,6 +97,19 @@ rgbToHexPixs([H|T],[H2|T2]):-
     hex_bytes(Hex,[R,G,B]), string_concat("#",Hex,Hex2),
     pixhex-d(X,Y,Hex2,D,H2),
     rgbToHexPixs(T,T2).
+
+imageRotate90([A,L,P,C], I2):-
+    image(_,_,_,[A,L,P,C]),
+    not(imageIsCompressed([A,L,P,C])),
+    rotatePixs(P,L,P2),
+    image(L,A,P2,I2).
+
+rotatePixs([],_,[]).
+rotatePixs([H|T],L,[H2|T2]):-
+    pixel(X,Y,Color,D,H),
+    Y2 is L - 1 - Y,
+    pixel(Y2,X,Color,D,H2),
+    rotatePixs(T,L,T2).
 
 img1(I) :-
     pixbit-d(0, 0, 1, 10, P1),
