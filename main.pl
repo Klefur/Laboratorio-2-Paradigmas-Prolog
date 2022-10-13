@@ -74,15 +74,15 @@ imageCrop([Width,Height,Pixs,CompressColor],X0,Y0,X1,Y1,I2) :-
     image(Width2,Height2,P2,I2).
 
 cropPixs([],_,_,_,_,[]).
-cropPixs([H|T],X0,Y0,X1,Y1,T2):-
-    pixel(X,Y,_,_,H),
-    (X =< X0;X1 =< X),(Y =< Y0; Y1 =< Y),
-    cropPixs(T,X0,Y0,X1,Y1,T2).
 cropPixs([H|T],X0,Y0,X1,Y1,[H2|T2]):-
     pixel(X,Y,Color,Depth,H),
     X0 =< X,X =< X1,Y0 =< Y, Y =< Y1,
     X2 is X - X0, Y2 is Y - Y0,
     pixel(X2,Y2,Color,Depth,H2),
+    cropPixs(T,X0,Y0,X1,Y1,T2).
+cropPixs([H|T],X0,Y0,X1,Y1,T2):-
+    pixel(X,Y,_,_,H),
+    (X =< X0;X1 =< X),(Y =< Y0; Y1 =< Y),
     cropPixs(T,X0,Y0,X1,Y1,T2).
 
 imageRGBToHex([Width,Height,Pixs,CompressColor], I2):-
@@ -94,55 +94,12 @@ imageRGBToHex([Width,Height,Pixs,CompressColor], I2):-
 rgbToHexPixs([],[]).
 rgbToHexPixs([H|T],[H2|T2]):-
     pixrgb-d(X,Y,R,G,B,Depth,H),
-    rgbToHex([R,G,B],Hex),
-    pixhex-d(X,Y,Hex,Depth,H2),
+    hex_bytes(Hex,[R,G,B]),string_upper(Hex,HexUp),
+    string_concat("#",HexUp,Hex2),
+    pixhex-d(X,Y,Hex2,Depth,H2),
     rgbToHexPixs(T,T2).
 
-rgbToHex([R,G,B], Hex):-
-	R1 is R // 16, R2 is R - (R1 * 16),
-    G1 is G // 16, G2 is G - (G1 * 16),
-    B1 is B // 16, B2 is B - (B1 * 16),
-    hex(StrR1, R1),hex(StrR2, R2),
-    string_concat(StrR1,StrR2,StrR3),
-    hex(StrG1, G1),hex(StrG2, G2),
-    string_concat(StrG1,StrG2,StrG3),
-    hex(StrB1, B1),hex(StrB2, B2),
-    string_concat(StrB1,StrB2,StrB3),
-    string_concat(StrR3,StrG3,StrRG3),
-    string_concat(StrRG3,StrB3,StrRGB),
-    string_concat("#",StrRGB,Hex).
-
-hex("0",0).
-hex("1",1).
-hex("2",2).
-hex("3",3).
-hex("4",4).
-hex("5",5).
-hex("6",6).
-hex("7",7).
-hex("8",8).
-hex("9",9).
-hex("A",10).
-hex("B",11).
-hex("C",12).
-hex("D",13).
-hex("E",14).
-hex("F",15).
-
-imageRotate90([Width,Height,Pixs,CompressColor], I2):-
-    image(_,_,_,[Width,Height,Pixs,CompressColor]),
-    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    rotatePixs(Pixs,Height,P2),
-    image(Height,Width,P2,I2).
-
-rotatePixs([],_,[]).
-rotatePixs([H|T],Height,[H2|T2]):-
-    pixel(X,Y,Color,Depth,H),
-    Y2 is Height - 1 - Y,
-    pixel(Y2,X,Color,Depth,H2),
-    rotatePixs(T,Height,T2).
-
-histograma([Width,Height,Pixs,CompressColor], Histogram):-
+imageToHistogram([Width,Height,Pixs,CompressColor], Histogram):-
     image(_,_,_,[Width,Height,Pixs,CompressColor]),
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
 	genHistogram(Pixs,Histogram).
@@ -151,17 +108,13 @@ genHistogram([],[]).
 genHistogram([H|T],H2):-
     genHistogram(T,T2),
     pixel(_,_,Color,_,H),
-    not(estaColor(T2,Color)),
+    not(member([Color,_],T2)),
     myAppend(T2,[Color, 1],H2).
 genHistogram([H|T],H2):-
     genHistogram(T,T2),
     pixel(_,_,Color,_,H),
-    estaColor(T2,Color),
+    member([Color,_],T2),
     add1(T2,Color,H2).
-
-estaColor([[Color,_]|T],X):-
-    Color == X;
-    estaColor(T,X).
 
 myAppend([],E,[E]).
 myAppend([H],E,[H,E]).
@@ -182,6 +135,36 @@ getMayor(M,[_,C],[[H,C2]|T]):-
 getMayor(M,[Y,C],[[_,C2]|T]):-
     C2 =< C,
     getMayor(M,[Y,C],T).
+
+imageRotate90([Width,Height,Pixs,CompressColor], I2):-
+    image(_,_,_,[Width,Height,Pixs,CompressColor]),
+    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
+    rotatePixs(Pixs,Height,P2),
+    image(Height,Width,P2,I2).
+
+rotatePixs([],_,[]).
+rotatePixs([H|T],Height,[H2|T2]):-
+    pixel(X,Y,Color,Depth,H),
+    Y2 is Height - 1 - Y,
+    pixel(Y2,X,Color,Depth,H2),
+    rotatePixs(T,Height,T2).
+
+imageCompress([Width,Height,Pixs,CompressValue],I3):-
+    image(_,_,_,[Width,Height,Pixs,CompressColor]),
+    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
+    imageToHistogram([Width,Height,Pixs,CompressValue], Histo),
+    getMayor(M,[-1,-1],Histo),
+    compressPixs(Pixs,M,P2),
+    image(Width,Height,P2,I2),
+    setCompressValue(I2,M,I3).
+
+compressPixs([],_,[]).
+compressPixs([H|T],M,[H|T2]):-
+    pixel(_,_,Color,_,H),
+    Color \== M,
+    compressPixs(T,M,T2).
+compressPixs([_|T],M,T2):-
+    compressPixs(T,M,T2).
 
 img1(I) :-
     pixbit-d(0, 0, 1, 10, P1),
