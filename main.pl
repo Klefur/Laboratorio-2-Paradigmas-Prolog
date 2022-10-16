@@ -38,10 +38,23 @@ imageIsHexmap([_,_,[H|T],_]):-
 
 imageIsCompressed([Width,Height,Pixs,CompressColor]):-
     CompressColor \== -1, image(_,_,_,[Height,Width,Pixs,CompressColor]).
-    
-imageFlipV([Width,Height,Pixs,CompressColor],[Width,Height,P2,CompressColor]):-
+
+sortPixs(_,_,Y,_,Height,[]):-
+    Y == Height.
+sortPixs(Pixs,X,Y,Width,Height,T2):-
+    X == Width,
+    Y1 is Y + 1,
+    sortPixs(Pixs,0,Y1,Width,Height,T2).
+sortPixs(Pixs,X,Y,Width,Height,[[X,Y,Color,Depth]|T2]):-
+    X < Width,
+    member([X,Y,Color,Depth],Pixs),
+    X1 is X + 1,
+    sortPixs(Pixs,X1,Y,Width,Height,T2).
+
+imageFlipV([Width,Height,Pixs,CompressColor],[Width,Height,SortP,CompressColor]):-
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    flipPixsV(Pixs,Height,P2).
+    flipPixsV(Pixs,Height,P2),
+    sortPixs(Pixs,0,0,Width,Height,SortP).
 
 flipPixsV([],_,[]).
 flipPixsV([H|T],Height,[H2|T2]):-
@@ -50,9 +63,10 @@ flipPixsV([H|T],Height,[H2|T2]):-
     pixel(X,Y2,Color,Depth,H2),
     flipPixs(T,Height,T2).
 
-imageFlipH([Width,Height,Pixs,CompressColor],[Width,Height,P2,CompressColor]):-
+imageFlipH([Width,Height,Pixs,CompressColor],[Width,Height,SortP,CompressColor]):-
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    flipPixsH(Pixs,Width,P2).
+    flipPixsH(Pixs,Width,P2),
+    sortPixs(Pixs,0,0,Width,Height,SortP).
 
 flipPixsH([],_,[]).
 flipPixsH([H|T],Width,[H2|T2]):-
@@ -63,9 +77,10 @@ flipPixsH([H|T],Width,[H2|T2]):-
 
 imageCrop([Width,Height,Pixs,CompressColor],X0,Y0,X1,Y1,I2) :-
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    cropPixs(Pixs,X0,Y0,X1,Y1,P2),
+    cropPixs(Pixs,X0,Y0,X1,Y1,P2),,
+    sortPixs(Pixs,0,0,Width,Height,SortP),
     Width2 is X1 + 1 - X0, Height2 is Y1 + 1 - Y0,
-    image(Width2,Height2,P2,I2).
+    image(Width2,Height2,SortP,I2).
 
 cropPixs([],_,_,_,_,[]).
 cropPixs([H|T],X0,Y0,X1,Y1,[H2|T2]):-
@@ -170,11 +185,23 @@ changePixs([H|T],PMod,[PMod|T2]):-
 changePixs([H|T],PMod,[H|T2]):-
     changePixs(T,PMod,T2).
 
+imageInvertColorRGB([Width,Height,Pixs,CompressColor],I2) :-
+    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
+    inverColorPixsRGB(Pixs,P2),
+    image(Width,Height,P2,I2).
+
+inverColorPixsRGB([],[]).
+inverColorPixsRGB([H|T],[H2|T2]) :-
+    pixrgb-d(X,Y,R,G,B,Depth,H),
+    R2 is 255 - R,G2 is 255 - G,B2 is 255 - B,
+    pixrgb-d(X,Y,R2,G2,B2,Depth,H2),
+    inverColorPixsRGB(T,T2).
+
 img1(I) :-
     pixbit-d(0, 0, 1, 10, P1),
     pixbit-d(0, 1, 0, 12, P2),
     pixbit-d(1, 0, 0, 10, P3),
-    pixbit-d(1, 0, 1, 12, P4), 
+    pixbit-d(1, 1, 1, 12, P4), 
     image(2, 2, [P1, P2, P3, P4], I).
 
 img2(I) :-
