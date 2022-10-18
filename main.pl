@@ -248,6 +248,75 @@ hexToString(Pixs,X,Y,Width,Height,Str3):-
     hexToString(Pixs,0,Y1,Width,Height,Str2),
     string_concat("\n",Str2,Str3).
 
+imageDepthLayers([Width,Height,Pixs,CompressedColor], ImageList):-
+    not(imageIsCompressed([Width,Height,Pixs,CompressedColor])),
+	genDepthogram(Pixs,Depthogram),
+    ((imageIsBitmap([Width,Height,Pixs,CompressedColor]),rellenarImagenesBit(Depthogram,Width,Height,ImageList));
+    (imageIsHexmap([Width,Height,Pixs,CompressedColor]),rellenarImagenesHex(Depthogram,Width,Height,ImageList));
+    (imageIsPixmap([Width,Height,Pixs,CompressedColor]),rellenarImagenesRGB(Depthogram,Width,Height,ImageList))).
+
+genDepthogram([],[]).
+genDepthogram([H|T],H2):-
+    genDepthogram(T,T2),
+    pixel(_,_,_,Depth,H),
+    not(member([[_,_,_,Depth]|_],T2)),
+    myAppend(T2,[H],H2).
+genDepthogram([H|T],H2):-
+    genDepthogram(T,T2),
+    pixel(_,_,_,Depth,H),
+    member([[_,_,_,Depth]|_],T2),
+    addPix(T2,H,H2).
+    
+addPix([],_,[]).
+addPix([[H|Ts]|T],Pix,[[H|H2]|T]):-
+	pixel(_,_,_,Depth,H),pixel(_,_,_,Depth,Pix),
+    myAppend(Ts,Pix,H2).
+addPix([H|T],Pix,[H|T2]):-
+    addPix(T,Pix,T2).
+
+rellenarImagenesBit([],_,_,[]).
+rellenarImagenesBit([[H|Ts]|T],Width,Height,[H2|T2]):-
+    pixel(_,_,_,Depth,H),
+    rellenarPixs([H|Ts],0,0,Width,Height,1,Depth,P2),
+    image(Width,Height,P2,H2),
+    rellenarImagenesBit(T,Width,Height,T2).
+
+rellenarImagenesRGB([],_,_,[]).
+rellenarImagenesRGB([[H|Ts]|T],Width,Height,[H2|T2]):-
+    pixel(_,_,_,Depth,H),
+    rellenarPixs([H|Ts],0,0,Width,Height,[255,255,255],Depth,P2),
+    image(Width,Height,P2,H2),
+    rellenarImagenesRGB(T,Width,Height,T2).
+
+rellenarImagenesHex([],_,_,[]).
+rellenarImagenesHex([[H|Ts]|T],Width,Height,[H2|T2]):-
+    pixel(_,_,_,Depth,H),
+    rellenarPixs([H|Ts],0,0,Width,Height,"#FFFFFF",Depth,P2),
+    image(Width,Height,P2,H2),
+    rellenarImagenesHex(T,Width,Height,T2).
+
+rellenarPixs(_,_,Y,_,Height,_,_,[]):-
+    Y == Height.
+rellenarPixs(Pixs,X,Y,Width,Height,Color,Depth,T2):-
+    X == Width,
+    Y1 is Y + 1,
+    rellenarPixs(Pixs,0,Y1,Width,Height,Color,Depth,T2).
+rellenarPixs(Pixs,X,Y,Width,Height,Color,Depth,[[X,Y,Color2,Depth]|T2]):-
+    X < Width,
+    member([X,Y,Color2,Depth],Pixs),
+    X1 is X + 1,
+    rellenarPixs(Pixs,X1,Y,Width,Height,Color,Depth,T2).
+rellenarPixs(Pixs,X,Y,Width,Height,Color,Depth,[H2|T2]):-
+    X < Width,
+    pixel(X,Y,Color,Depth,H2),
+    X1 is X + 1,
+    rellenarPixs(Pixs,X1,Y,Width,Height,Color,Depth,T2).
+
+imageDecompress([Width,Height,Pixs,CompressedColor],I2):-
+    imageIsCompressed([Width,Height,Pixs,CompressedColor]),
+    rellenarPixs(Pixs,0,0,Width,Height,CompressedColor,10,P2),
+    image(Width,Height,P2,I2).
+
 img1(I) :-
     pixbit-d(0, 0, 1, 10, P1),
     pixbit-d(0, 1, 0, 12, P2),
