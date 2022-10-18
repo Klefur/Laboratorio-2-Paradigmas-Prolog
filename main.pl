@@ -39,6 +39,32 @@ imageIsHexmap([_,_,[H|T],_]):-
 imageIsCompressed([Width,Height,Pixs,CompressColor]):-
     CompressColor \== -1, image(_,_,_,[Height,Width,Pixs,CompressColor]).
 
+imageFlipV([Width,Height,Pixs,CompressColor],I2):-
+    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
+    flipPixsV(Pixs,Height,P2),
+    sortPixs(P2,0,0,Width,Height,SortP),
+    image(Height,Width,SortP,I2).
+
+flipPixsV([],_,[]).
+flipPixsV([H|T],Height,[H2|T2]):-
+    pixel(X,Y,Color,Depth,H),
+    Y2 is Height - 1 - Y,
+    pixel(X,Y2,Color,Depth,H2),
+    flipPixs(T,Height,T2).
+
+imageFlipH([Width,Height,Pixs,CompressColor],I2):-
+    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
+    flipPixsH(Pixs,Width,P2),
+    sortPixs(P2,0,0,Width,Height,SortP),
+    image(Height,Width,SortP,I2).
+
+flipPixsH([],_,[]).
+flipPixsH([H|T],Width,[H2|T2]):-
+    pixel(X,Y,Color,Depth,H),
+    X2 is Width - 1 - X,
+    pixel(X2,Y,Color,Depth,H2),
+    flipPixsH(T,Width,T2).
+
 sortPixs(_,_,Y,_,Height,[]):-
     Y == Height.
 sortPixs(Pixs,X,Y,Width,Height,T2):-
@@ -51,36 +77,11 @@ sortPixs(Pixs,X,Y,Width,Height,[[X,Y,Color,Depth]|T2]):-
     X1 is X + 1,
     sortPixs(Pixs,X1,Y,Width,Height,T2).
 
-imageFlipV([Width,Height,Pixs,CompressColor],[Width,Height,SortP,CompressColor]):-
-    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    flipPixsV(Pixs,Height,P2),
-    sortPixs(Pixs,0,0,Width,Height,SortP).
-
-flipPixsV([],_,[]).
-flipPixsV([H|T],Height,[H2|T2]):-
-    pixel(X,Y,Color,Depth,H),
-    Y2 is Height - 1 - Y,
-    pixel(X,Y2,Color,Depth,H2),
-    flipPixs(T,Height,T2).
-
-imageFlipH([Width,Height,Pixs,CompressColor],[Width,Height,SortP,CompressColor]):-
-    not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    flipPixsH(Pixs,Width,P2),
-    sortPixs(Pixs,0,0,Width,Height,SortP).
-
-flipPixsH([],_,[]).
-flipPixsH([H|T],Width,[H2|T2]):-
-    pixel(X,Y,Color,Depth,H),
-    X2 is Width - 1 - X,
-    pixel(X2,Y,Color,Depth,H2),
-    flipPixsH(T,Width,T2).
-
 imageCrop([Width,Height,Pixs,CompressColor],X0,Y0,X1,Y1,I2) :-
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
-    cropPixs(Pixs,X0,Y0,X1,Y1,P2),,
-    sortPixs(Pixs,0,0,Width,Height,SortP),
+    cropPixs(Pixs,X0,Y0,X1,Y1,P2),
     Width2 is X1 + 1 - X0, Height2 is Y1 + 1 - Y0,
-    image(Width2,Height2,SortP,I2).
+    image(Width2,Height2,P2,I2).
 
 cropPixs([],_,_,_,_,[]).
 cropPixs([H|T],X0,Y0,X1,Y1,[H2|T2]):-
@@ -146,7 +147,8 @@ getMayor(M,[Y,C],[[_,C2]|T]):-
 imageRotate90([Width,Height,Pixs,CompressColor], I2):-
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
     rotatePixs(Pixs,Height,P2),
-    image(Height,Width,P2,I2).
+    sortPixs(P2,0,0,Width,Height,SortP),
+    image(Height,Width,SortP,I2).
 
 rotatePixs([],_,[]).
 rotatePixs([H|T],Height,[H2|T2]):-
@@ -172,16 +174,16 @@ compressPixs([_|T],M,T2):-
     compressPixs(T,M,T2).
 
 imageChangePixel([Width,Height,Pixs,CompressColor],P2Mod,I2):-
-    pixel(_,_,_,_,P2Mod),
+    (imageIsBitmap([Width,Height,Pixs,CompressColor]),pixbit-d(_,_,_,_,P2Mod);
+    imageIsPixmap([Width,Height,Pixs,CompressColor]),pixrgb-d(_,_,_,_,P2Mod);
+    imageIsHexmap([Width,Height,Pixs,CompressColor]),pixhex-d(_,_,_,_,P2Mod)),
     not(imageIsCompressed([Width,Height,Pixs,CompressColor])),
     changePixs(Pixs,P2Mod,Pixs2),
     image(Width,Height,Pixs2,I2).
 
-changePixs([],_,[]).
-changePixs([H|T],PMod,[PMod|T2]):-
+changePixs([H|T],PMod,[PMod|T]):-
     pixel(X,Y,_,_,H),
-    pixel(X,Y,_,_,PMod),
-    changePixs(T,PMod,T2).
+    pixel(X,Y,_,_,PMod).
 changePixs([H|T],PMod,[H|T2]):-
     changePixs(T,PMod,T2).
 
@@ -196,6 +198,55 @@ inverColorPixsRGB([H|T],[H2|T2]) :-
     R2 is 255 - R,G2 is 255 - G,B2 is 255 - B,
     pixrgb-d(X,Y,R2,G2,B2,Depth,H2),
     inverColorPixsRGB(T,T2).
+
+imageToString([Width,Height,Pixs,CompressedColor],String):-
+    not(imageIsCompressed([Width,Height,Pixs,CompressedColor])),
+    (imageIsBitmap([Width,Height,Pixs,CompressedColor]),bitToString(Pixs,0,0,Width,Height,String));
+    (imageIsPixmap([Width,Height,Pixs,CompressedColor]),rgbToString(Pixs,0,0,Width,Height,String));
+    (imageIsHexmap([Width,Height,Pixs,CompressedColor]),hexToString(Pixs,0,0,Width,Height,String)).
+
+bitToString(_,_,Y,_,Height,""):-
+    Height == Y.
+bitToString(Pixs,X,Y,Width,Height,Str3):-
+    X < Width,member([X,Y,Color,_],Pixs),
+    string_concat(Color," ",Str),
+    X1 is X + 1,
+    bitToString(Pixs,X1,Y,Width,Height,Str2),
+    string_concat(Str,Str2,Str3).
+bitToString(Pixs,X,Y,Width,Height,Str3):-
+    X == Width,Y1 is Y + 1,
+    bitToString(Pixs,0,Y1,Width,Height,Str2),
+    string_concat("\n",Str2,Str3).
+
+rgbToString(_,_,Y,_,Height,""):-
+    Height == Y.
+rgbToString(Pixs,X,Y,Width,Height,Str3):-
+    X < Width,member([X,Y,Color,_],Pixs),
+    pixrgb-d(_,_,R,G,B,_,[X,Y,Color,0]),
+    string_concat(R,",",StrR),
+    string_concat(G,",",StrG),
+    string_concat(B," ",StrB),
+    string_concat(StrR,StrG,StrRG),string_concat(StrRG,StrB,Str),
+    X1 is X + 1,
+    rgbToString(Pixs,X1,Y,Width,Height,Str2),
+    string_concat(Str,Str2,Str3).
+rgbToString(Pixs,X,Y,Width,Height,Str3):-
+    X == Width,Y1 is Y + 1,
+    rgbToString(Pixs,0,Y1,Width,Height,Str2),
+    string_concat("\n",Str2,Str3).
+
+hexToString(_,_,Y,_,Height,""):-
+    Height == Y.
+hexToString(Pixs,X,Y,Width,Height,Str3):-
+    X < Width,member([X,Y,Color,_],Pixs),
+    string_concat(Color," ",Str),
+    X1 is X + 1,
+    hexToString(Pixs,X1,Y,Width,Height,Str2),
+    string_concat(Str,Str2,Str3).
+hexToString(Pixs,X,Y,Width,Height,Str3):-
+    X == Width,Y1 is Y + 1,
+    hexToString(Pixs,0,Y1,Width,Height,Str2),
+    string_concat("\n",Str2,Str3).
 
 img1(I) :-
     pixbit-d(0, 0, 1, 10, P1),
