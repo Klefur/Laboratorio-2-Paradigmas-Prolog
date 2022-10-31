@@ -1,76 +1,109 @@
-% -------------------------------------- PIXEL -------------------------------------------------
-
-% -------------------------------------- CONSTRUCTORES -------------------------------------------------
-
-% Dom: Cuatro integer y un pixbit-d
-% Desc: Predicado que crea un pixbit-d
-pixbit-d(X,Y,Bit,Depth,[X,Y,Bit,Depth]) :-
-    integer(X), integer(Y), integer(Bit), integer(Depth),
-    between(0, 1, Bit).
-
-% Dom: Seis integer y un pixrgb-d
-% Desc: Predicado que crea un pixrgb-d
-pixrgb-d(X,Y,R,G,B,Depth,[X,Y,[R,G,B],Depth]) :-
-    integer(X), integer(Y), integer(R), integer(G), integer(B), integer(Depth),
-    between(0, 255, R), between(0, 255, G), between(0, 255, B).
-
-% Dom: Tres integer, un string y un pixhex-d
-% Desc: Predicado que crea un pixhex-d
-pixhex-d(X,Y,Hex,Depth,[X, Y, Hex, Depth]) :-
-    integer(X), integer(Y), string(Hex), integer(Depth),
-    string_length(Hex,7).
-
-% Dom: Tres integer, un color (integer|list|string) y un pixel
-% Desc: Predicado que crea un pixel de cualquier tipo
-pixel(X,Y,Color,Depth,[X,Y,Color,Depth]) :-
-    pixbit-d(X,Y,Color,Depth,[X,Y,Color,Depth]);
-    pixhex-d(X,Y,Color,Depth,[X,Y,Color,Depth]);
-	pixrgb-d(X,Y,_,_,_,Depth,[X,Y,Color,Depth]).
-
+:- use_module(tda_pixel).
 % -------------------------------------- IMAGEN -------------------------------------------------
+/*
+Dominio:
+    I: Image
+    Width, Height: Integer
+    Pixs: Lista de Pixeles
+    Histogram,Depthogram: Lista de listas
+
+Predicados:  
+    image(Width, Height, Pixs, [Width, Height, Pixs, CompressedColor]) (aridad = 4)
+    imageIsPixmap(I) (aridad = 1)
+    imageIsHexmap(I) (aridad = 1)
+    imageIsBitmap(I) (aridad = 1)
+    imagen(I) (aridad = 1)
+    imageIsCompressed(I) (aridad = 1)
+    imageFlipH(I,I2) (aridad = 2)
+    flipPixsH(Pixs,Width,P2) (aridad = 3)
+    imageFlipV(I,I2) (aridad = 2)
+    flipPixsV(Pixs,Height,P2) (aridad = 3)
+    sortPixs(Pixs,X,Y,Width,Height,P2) (aridad = 6)
+    imageCrop(I,I2) (aridad = 2)
+    cropPixs(Pixs,P2) (aridad = 2)
+    imageRGBToHex(I,I2) (aridad = 2)
+    rgbToHexPixs(Pixs,P2) (aridad = 2)
+    imageToHistogram(I,Histogram) (aridad = 2)
+    genHistogram(Pixs,Histogram) (aridad = 4)
+    myAppend(Lista1,E,Lista2) (aridad = 3)
+    add1(Lista1,E,Lista2) (aridad = 3)
+    getMayor(Mayor,Elem,Lista) (aridad = 3)
+    imageRotate90(I,I2) (aridad = 2)
+    rotatePixs(Pixs,P2) (aridad = 2)
+    imageCompress(I,I2) (aridad = 2)
+    compressPixs(Pixs,P2) (aridad = 2)
+    imageInvertColorRGB(I,I2) (aridad = 2)
+    inverColorPixsRGB(Pixs,P2) (aridad = 2)
+    imageChangePixel(I,PMod,I2) (aridad = 3)
+    changePixs(Pixs,PMod,P2) (aridad = 4)
+    imageToString(I,String) (aridad = 2)
+    bitToString(Pixs,X,Y,Width,Height,String) (aridad = 6)
+    rgbToString(Pixs,X,Y,Width,Height,String) (aridad = 6)
+    hexToString(Pixs,X,Y,Width,Height,String) (aridad = 6)
+    imageDepthLayers(I,ImageList) (aridad = 2)
+    genDepthogram(Pixs,Depthogram) (aridad = 2)
+    addPix(Lista1,Pix,Lista2) (aridad = 2)
+    rellenarPixs(Pixs,X,Y,Width,Height,Color,Depth,T2) (aridad = 8)
+    rellenarImagenesBit(Depthogram,Width,Height,ImageList) (aridad = 4)
+    rellenarImagenesHex(Depthogram,Width,Height,ImageList) (aridad = 4)
+    rellenarImagenesRGB(Depthogram,Width,Height,ImageList) (aridad = 4)
+    imageDecompress(I,I2) (aridad = 2)
+
+Metas primarias: 
+    imageIsPixmap, imageIsHexmap, imageIsBitmap, imageIsCompressed,imageFlipH, imageRotate90, 
+    imageCompress, imageInvertColorRGB, imageChangePixel, imageToString, imageDepthLayers, imageDecompress
+Metas secundarias: 
+    flipPixsH, flipPixsV, cropPixs, rgbToHexPixs, myAppend, add1, getMayor, genDepthogram, genHistogram
+    rotatePixs, compressPixs, inverColorPixsRGB, changePixs, bitToString, rgbToString, hexToString
+    addPix, rellenarPixs, rellenarImagenesBit, rellenarImagenesHex, rellenarImagenesRGB
+    getCompressedColor, setCompressedColor, imagen
+*/
+
+% Clausulas
+% Reglas
 
 % -------------------------------------- CONSTRUCTOR -------------------------------------------------
 
 % Dom: Dos integer, una lista de pixeles y una image
 % Desc: Predicado que crea una imagen
-image(Width,Height,Pixs,[Width,Height,Pixs,CompressColor]):-
-    string(CompressColor);integer(CompressColor);is_list(CompressColor); CompressColor is -1.
+image(Width,Height,Pixs,[Width,Height,Pixs,CompressedColor]):-
+    string(CompressedColor);integer(CompressedColor);is_list(CompressedColor); CompressedColor is -1.
 
 % -------------------------------------- SELECTOR -------------------------------------------------
 
 % Dom: Una image y un integer
 % Desc: Predicado que entrega el color comprimido en una imagen
-getCompressColor([Width,Height,Pixs,CompressedColor],CompressedColor):-
+getCompressedColor([Width,Height,Pixs,CompressedColor],CompressedColor):-
     image(_,_,_,[Width,Height,Pixs,CompressedColor]).
 
 % -------------------------------------- MODIFICADOR -------------------------------------------------
 
 % Dom: Una image y un integer
 % Desc: Predicado que cambia el color comprimido en una imagen
-setCompressColor([Width,Height,Pixs,CompressColor], X, [Width,Height,Pixs,X]) :-
-    image(_,_,_,[Width,Height,Pixs,CompressColor]), image(_,_,_,[Width,Height,Pixs,X]).
+setCompressedColor([Width,Height,Pixs,CompressedColor], X, [Width,Height,Pixs,X]) :-
+    image(_,_,_,[Width,Height,Pixs,CompressedColor]), image(_,_,_,[Width,Height,Pixs,X]).
 
 % -------------------------------------- PERTENENCIA -------------------------------------------------
 
 % Dom: Una image
-% Desc: Predicado que determina si una imagen tiene pixeles pixbit-d
+% Desc: Predicado que determina si una imagen tiene pixeles pixbit
 imageIsBitmap([_,_,[],_]).
 imageIsBitmap([_,_,[H|T],_]):-
-    pixbit-d(_,_,_,_,H),
+    pixbit(_,_,_,_,H),
     imageIsBitmap([_,_,T,_]).
 
 % Dom: Una image
-% Desc: Predicado que determina si una imagen tiene pixeles pixrgb-d
+% Desc: Predicado que determina si una imagen tiene pixeles pixrgb
 imageIsPixmap([_,_,[],_]).
 imageIsPixmap([_,_,[H|T],_]):-
-    pixrgb-d(_,_,_,_,_,_,H),
+    pixrgb(_,_,_,_,_,_,H),
     imageIsPixmap([_,_,T,_]).
 
 % Dom: Una image
-% Desc: Predicado que determina si una imagen tiene pixeles pixhex-d
+% Desc: Predicado que determina si una imagen tiene pixeles pixhex
 imageIsHexmap([_,_,[],_]).
 imageIsHexmap([_,_,[H|T],_]):-
-    pixhex-d(_,_,_,_,H),
+    pixhex(_,_,_,_,H),
     imageIsHexmap([_,_,T,_]).
 
 % Dom: Una image
@@ -82,8 +115,8 @@ imagen(I):-
 
 % Dom: Una image
 % Desc: Predicado que determina si una imagen esta comprimida
-imageIsCompressed([Width,Height,Pixs,CompressColor]):-
-    CompressColor \== -1, image(_,_,_,[Height,Width,Pixs,CompressColor]).
+imageIsCompressed([Width,Height,Pixs,CompressedColor]):-
+    CompressedColor \== -1, image(_,_,_,[Height,Width,Pixs,CompressedColor]).
 
 % -------------------------------------- OTRAS FUNCIONES -------------------------------------------------
 
@@ -103,7 +136,7 @@ flipPixsV([H|T],Height,[H2|T2]):-
     pixel(X,Y,Color,Depth,H),
     Y2 is Height - 1 - Y,
     pixel(X,Y2,Color,Depth,H2),
-    flipPixs(T,Height,T2).
+    flipPixsV(T,Height,T2).
 
 % Dom: Dos image
 % Desc: Predicado que voltea los pixeles horizontalmente de una imagen
@@ -173,10 +206,10 @@ imageRGBToHex(I, I2):-
 % Desc: Predicado que transforma cada pixel rgb en pixel hex
 rgbToHexPixs([],[]).
 rgbToHexPixs([H|T],[H2|T2]):-
-    pixrgb-d(X,Y,R,G,B,Depth,H),
+    pixrgb(X,Y,R,G,B,Depth,H),
     hex_bytes(Hex,[R,G,B]),string_upper(Hex,HexUp),
     string_concat("#",HexUp,Hex2),
-    pixhex-d(X,Y,Hex2,Depth,H2),
+    pixhex(X,Y,Hex2,Depth,H2),
     rgbToHexPixs(T,T2).
 
 % Dom: Una image y una lista
@@ -210,7 +243,7 @@ myAppend([H|T],E,[H|T2]):-
 % Dom: Dos listas y un elemento perteneciente a la lista
 % Desc: Predicado que agrega uno al contador donde se encuentra el elemento
 add1([],_,[]).
-add1([[E,C]|T],E,[[E,C2]|T]):-
+add1([[E,C]|T],E2,[[E,C2]|T]):-
     E2 == E,
     C2 is C + 1.
 add1([[E,C]|T],E2,[[E,C]|T2]):-
@@ -253,7 +286,7 @@ imageCompress(I,I3):-
     getMayor(M,[-1,-1],Histo),
     compressPixs(Pixs,M,P2),
     image(Width,Height,P2,I2),
-    setCompressColor(I2,M,I3).
+    setCompressedColor(I2,M,I3).
 
 % Dom: Dos listas y un color
 % Desc: Predicado que elimina los pixeles de una lista de pixeles que tengan el mismo color que el entregado
@@ -268,13 +301,13 @@ compressPixs([_|T],M,T2):-
 % Dom: Dos image y un pixel
 % Desc: Predicado que cambia un pixel en especifico de una imagen
 imageChangePixel(I,P2Mod,I2):-
-    (imageIsBitmap(I),pixbit-d(_,_,_,_,P2Mod);
-    imageIsPixmap(I),pixrgb-d(_,_,_,_,P2Mod);
-    imageIsHexmap(I),pixhex-d(_,_,_,_,P2Mod)),
+    (imageIsBitmap(I),pixbit(_,_,_,_,P2Mod);
+    imageIsPixmap(I),pixrgb(_,_,_,_,P2Mod);
+    imageIsHexmap(I),pixhex(_,_,_,_,P2Mod)),
     image(Width,Height,Pixs,I),
     not(imageIsCompressed(I)),
-    changePixs(Pixs,P2Mod,Pixs2),
-    image(Width,Height,Pixs2,I2).
+    changePixs(Pixs,P2Mod,P2),
+    image(Width,Height,P2,I2).
 
 % Dom: Dos listas y un pixel
 % Desc: Predicado cambia un pixel de la lista de pixeles por uno entregado
@@ -296,22 +329,22 @@ imageInvertColorRGB(I,I2) :-
 % Desc: Predicado invierte los colores rgb de una lista de pixeles
 inverColorPixsRGB([],[]).
 inverColorPixsRGB([H|T],[H2|T2]) :-
-    pixrgb-d(X,Y,R,G,B,Depth,H),
+    pixrgb(X,Y,R,G,B,Depth,H),
     R2 is 255 - R,G2 is 255 - G,B2 is 255 - B,
-    pixrgb-d(X,Y,R2,G2,B2,Depth,H2),
+    pixrgb(X,Y,R2,G2,B2,Depth,H2),
     inverColorPixsRGB(T,T2).
 
 % Dom: Una image y un string
 % Desc: Predicado que transforma el color de los pixeles de una imagen en un string
 imageToString(I,String):-
-    imagen(I), image(Width,Height,Pixs,I),
+    image(Width,Height,Pixs,I),
     not(imageIsCompressed(I)),
     (imageIsBitmap(I),bitToString(Pixs,0,0,Width,Height,String);
     imageIsPixmap(I),rgbToString(Pixs,0,0,Width,Height,String);
     imageIsHexmap(I),hexToString(Pixs,0,0,Width,Height,String)).
 
 % Dom: Una lista, cuatro integer y un string
-% Desc: Predicado que transforma una lista de pixbit-d a string
+% Desc: Predicado que transforma una lista de pixbit a string
 bitToString(_,_,Y,_,Height,""):-
     Height == Y.
 bitToString(Pixs,X,Y,Width,Height,Str3):-
@@ -326,16 +359,17 @@ bitToString(Pixs,X,Y,Width,Height,Str3):-
     string_concat("\n",Str2,Str3).
 
 % Dom: Una lista, cuatro integer y un string
-% Desc: Predicado que transforma una lista de pixrgb-d a string
+% Desc: Predicado que transforma una lista de pixrgb a string
 rgbToString(_,_,Y,_,Height,""):-
     Height == Y.
 rgbToString(Pixs,X,Y,Width,Height,Str3):-
     X < Width,member([X,Y,Color,_],Pixs),
-    pixrgb-d(_,_,R,G,B,_,[X,Y,Color,0]),
+    pixrgb(_,_,R,G,B,_,[X,Y,Color,0]),
     string_concat(R,",",StrR),
     string_concat(G,",",StrG),
-    string_concat(B," ",StrB),
-    string_concat(StrR,StrG,StrRG),string_concat(StrRG,StrB,Str),
+    string_concat(B,"] ",StrB),
+    string_concat(StrR,StrG,StrRG),string_concat(StrRG,StrB,StrRGB),
+    string_concat("[",StrRGB,Str),
     X1 is X + 1,
     rgbToString(Pixs,X1,Y,Width,Height,Str2),
     string_concat(Str,Str2,Str3).
@@ -345,7 +379,7 @@ rgbToString(Pixs,X,Y,Width,Height,Str3):-
     string_concat("\n",Str2,Str3).
 
 % Dom: Una lista, cuatro integer y un string
-% Desc: Predicado que transforma una lista de pixhex-d a string
+% Desc: Predicado que transforma una lista de pixhex a string
 hexToString(_,_,Y,_,Height,""):-
     Height == Y.
 hexToString(Pixs,X,Y,Width,Height,Str3):-
@@ -362,7 +396,7 @@ hexToString(Pixs,X,Y,Width,Height,Str3):-
 % Dom: Una image y una lista de image
 % Desc: Predicado que recibe una imagen y crea una imagen por cada profundidad diferente
 imageDepthLayers(I, ImageList):-
-    imagen(I), image(Width,Height,Pixs,I),
+    image(Width,Height,Pixs,I),
     not(imageIsCompressed(I)),
 	genDepthogram(Pixs,Depthogram),
     (imageIsBitmap(I),rellenarImagenesBit(Depthogram,Width,Height,ImageList);
@@ -442,29 +476,29 @@ rellenarPixs(Pixs,X,Y,Width,Height,Color,Depth,[H2|T2]):-
 % Desc: Predicado que recibe una imagen comprimida y entrega la imagen descomprimida
 imageDecompress(I,I2):-
     imagen(I), image(Width,Height,Pixs,I),
-    imageIsCompressed(I),getCompressColor(I,CompressedColor),
+    imageIsCompressed(I),getCompressedColor(I,CompressedColor),
     rellenarPixs(Pixs,0,0,Width,Height,CompressedColor,10,P2),
     image(Width,Height,P2,I2).
 
 % -------------------------------------- PRUEBAS -------------------------------------------------
 
 img1(I) :-
-    pixbit-d(0, 0, 1, 10, P1),
-    pixbit-d(0, 1, 0, 12, P2),
-    pixbit-d(1, 0, 0, 10, P3),
-    pixbit-d(1, 1, 1, 12, P4), 
+    pixbit(0, 0, 1, 10, P1),
+    pixbit(0, 1, 0, 12, P2),
+    pixbit(1, 0, 0, 10, P3),
+    pixbit(1, 1, 1, 12, P4), 
     image(2, 2, [P1, P2, P3, P4], I).
 
 img2(I) :-
-    pixrgb-d(0, 0, 1, 10, 30, 10, P1),
-    pixrgb-d(0, 1, 0, 50, 132, 12, P2),
-    pixrgb-d(1, 0, 0, 70, 122, 10, P3),
-    pixrgb-d(1, 1, 1, 23, 133, 12, P4), 
+    pixrgb(0, 0, 1, 10, 30, 10, P1),
+    pixrgb(0, 1, 0, 50, 132, 12, P2),
+    pixrgb(1, 0, 0, 70, 122, 10, P3),
+    pixrgb(1, 1, 1, 23, 133, 12, P4), 
     image(2, 2, [P1, P2, P3, P4], I).
 
 img3(I) :-
-    pixhex-d(0, 0, "#192341", 10, P1),
-    pixhex-d(0, 1, "#00FFCC", 12, P2),
-    pixhex-d(1, 0, "#00FFDD", 10, P3),
-    pixhex-d(1, 1, "#77FFCC", 12, P4), 
+    pixhex(0, 0, "#192341", 10, P1),
+    pixhex(0, 1, "#00FFCC", 12, P2),
+    pixhex(1, 0, "#00FFDD", 10, P3),
+    pixhex(1, 1, "#77FFCC", 12, P4), 
     image(2, 2, [P1, P2, P3, P4], I).
