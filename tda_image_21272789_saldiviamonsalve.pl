@@ -1,4 +1,4 @@
-:- use_module(tda_pixel).
+:- include(tda_pixel_21272789_saldiviamonsalve).
 % -------------------------------------- IMAGEN -------------------------------------------------
 /*
 Dominio:
@@ -7,7 +7,7 @@ Dominio:
     Pixs: Lista de Pixeles
     Histogram,Depthogram: Lista de listas
 
-Predicados:  
+Predicados:
     image(Width, Height, Pixs, [Width, Height, Pixs, CompressedColor]) (aridad = 4)
     imageIsPixmap(I) (aridad = 1)
     imageIsHexmap(I) (aridad = 1)
@@ -49,10 +49,10 @@ Predicados:
     rellenarImagenesRGB(Depthogram,Width,Height,ImageList) (aridad = 4)
     imageDecompress(I,I2) (aridad = 2)
 
-Metas primarias: 
-    imageIsPixmap, imageIsHexmap, imageIsBitmap, imageIsCompressed,imageFlipH, imageRotate90, 
+Metas primarias:
+    imageIsPixmap, imageIsHexmap, imageIsBitmap, imageIsCompressed, imageFlipH, imageRotate90,
     imageCompress, imageInvertColorRGB, imageChangePixel, imageToString, imageDepthLayers, imageDecompress
-Metas secundarias: 
+Metas secundarias:
     flipPixsH, flipPixsV, cropPixs, rgbToHexPixs, myAppend, add1, getMayor, genDepthogram, genHistogram
     rotatePixs, compressPixs, inverColorPixsRGB, changePixs, bitToString, rgbToString, hexToString
     addPix, rellenarPixs, rellenarImagenesBit, rellenarImagenesHex, rellenarImagenesRGB
@@ -107,7 +107,7 @@ imageIsHexmap([_,_,[H|T],_]):-
     imageIsHexmap([_,_,T,_]).
 
 % Dom: Una image
-% Desc: Predicado que determina si una imagen tiene pixeles homogeneos 
+% Desc: Predicado que determina si una imagen tiene pixeles homogeneos
 imagen(I):-
     imageIsBitmap(I);
     imageIsPixmap(I);
@@ -181,7 +181,7 @@ imageCrop(I,X0,Y0,X1,Y1,I2) :-
     image(Width2,Height2,P2,I2).
 
 % Dom: Dos listas de pixeles y cuatro integer
-% Desc: Predicado que elimina pixeles de una lista de pixeles dado un punto de inicio y un punto de fin 
+% Desc: Predicado que elimina pixeles de una lista de pixeles dado un punto de inicio y un punto de fin
 cropPixs([],_,_,_,_,[]).
 cropPixs([H|T],X0,Y0,X1,Y1,[H2|T2]):-
     pixel(X,Y,Color,Depth,H),
@@ -302,7 +302,7 @@ compressPixs([_|T],M,T2):-
 % Desc: Predicado que cambia un pixel en especifico de una imagen
 imageChangePixel(I,P2Mod,I2):-
     (imageIsBitmap(I),pixbit(_,_,_,_,P2Mod);
-    imageIsPixmap(I),pixrgb(_,_,_,_,P2Mod);
+    imageIsPixmap(I),pixrgb(_,_,_,_,_,_,P2Mod);
     imageIsHexmap(I),pixhex(_,_,_,_,P2Mod)),
     image(Width,Height,Pixs,I),
     not(imageIsCompressed(I)),
@@ -479,26 +479,3 @@ imageDecompress(I,I2):-
     imageIsCompressed(I),getCompressedColor(I,CompressedColor),
     rellenarPixs(Pixs,0,0,Width,Height,CompressedColor,10,P2),
     image(Width,Height,P2,I2).
-
-% -------------------------------------- PRUEBAS -------------------------------------------------
-
-img1(I) :-
-    pixbit(0, 0, 1, 10, P1),
-    pixbit(0, 1, 0, 12, P2),
-    pixbit(1, 0, 0, 10, P3),
-    pixbit(1, 1, 1, 12, P4), 
-    image(2, 2, [P1, P2, P3, P4], I).
-
-img2(I) :-
-    pixrgb(0, 0, 1, 10, 30, 10, P1),
-    pixrgb(0, 1, 0, 50, 132, 12, P2),
-    pixrgb(1, 0, 0, 70, 122, 10, P3),
-    pixrgb(1, 1, 1, 23, 133, 12, P4), 
-    image(2, 2, [P1, P2, P3, P4], I).
-
-img3(I) :-
-    pixhex(0, 0, "#192341", 10, P1),
-    pixhex(0, 1, "#00FFCC", 12, P2),
-    pixhex(1, 0, "#00FFDD", 10, P3),
-    pixhex(1, 1, "#77FFCC", 12, P4), 
-    image(2, 2, [P1, P2, P3, P4], I).
