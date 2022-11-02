@@ -9,6 +9,8 @@
 
 Este es el respositorio del **laboratorio 2** del curso de Paradigmas de Programación. Donde se trabaja el paradigma logico, a traves del lenguaje de programación Prolog, con el proposito de crear una aplicacion estilo photoshop.
 
+Donde se compone de [TDA Image](https://github.com/Klefur/Laboratorio-2-Paradigmas-Prolog/blob/main/tda_image_21272789_saldiviamonsalve.pl) donde se define la construccion de la imagen junto con todas sus funciones modificadoras, [TDA Pixel](https://github.com/Klefur/Laboratorio-2-Paradigmas-Prolog/blob/main/tda_pixel_21272789_saldiviamonsalve.pl) donde se establecen los tipos de pixeles que se usaran en las imagenes ademas de sus respectivos modificadores, se logro hacer **17/17 funciones**.
+
 ## Prerrequisitos
 
 Tener instalado [Swi-prolog](https://www.swi-prolog.org/Download.html) en una versión 8.4 o superior.
@@ -18,7 +20,7 @@ Tener instalado [Swi-prolog](https://www.swi-prolog.org/Download.html) en una ve
 Clonar el repositorio para acceder a los archivos de manera mas rapida:
 
 ```sh
-git clone colocar link
+git clone https://github.com/Klefur/Laboratorio-2-Paradigmas-Prolog.git
 ```
 
-luego teniendo los 3 archivos en una misma carpeta abrir el [archivo de pruebas](https://github.com/Klefur/Laboratorio-1-Paradigmas-Racket/blob/main/pruebas_21272789_SaldiviaMonsalve.rkt) y ejecutar, para pruebas propias se recomienda la creacion de imagenes homogeneas para una aplicacion correcta de las funciones
+luego teniendo los 3 archivos en una misma carpeta abrir el [archivo de pruebas](https://github.com/Klefur/Laboratorio-2-Paradigmas-Prolog/blob/main/pruebas_21272789_saldiviamonsalve.pl) y ejecutar, para pruebas propias se recomienda la creacion de imagenes homogeneas para una aplicacion correcta de las funciones
