@@ -1,4 +1,4 @@
-:- include(tda_image_21272789_saldiviamonsalve).
+:- include(tda_image).
 
 /*
 -------------------------------------- PRUEBAS ALUMNO -------------------------------------------------

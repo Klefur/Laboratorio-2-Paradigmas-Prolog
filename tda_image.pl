@@ -1,4 +1,4 @@
-:- include(tda_pixel_21272789_saldiviamonsalve).
+:- include(tda_pixel).
 % -------------------------------------- IMAGEN -------------------------------------------------
 /*
 Dominio:
